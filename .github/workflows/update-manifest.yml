@@ -3,6 +3,7 @@ name: Auto-Generate Themes Manifest
 on:
   release:
     types: [published, edited]
+  workflow_dispatch: # Enables manual execution from the Actions tab
 
 jobs:
   build-manifest:
