@@ -1,0 +1,16 @@
+# Runtime-generated - never commit these
+work/
+output/
+pristine_slots/
+remote_cache/
+__pycache__/
+*.pyc
+
+# Users' own uploaded themes - not part of the repo
+themes/*
+!themes/.gitkeep
+
+# Local theme library you're about to publish (build_manifest.py input) -
+# keep this out of git; only themes_manifest.json + the Release assets
+# are meant to be published.
+theme_library_source/

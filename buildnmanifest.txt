@@ -1,0 +1,9 @@
+Wrote D:\Downloads\aod_theme_manager (1)\aod_theme_manager\themes_manifest.json with 70 theme(s).
+
+Next steps:
+  1. Upload every .aodbackup file in D:\Downloads\aod_theme_manager (1)\aod_theme_manager\them as a Release asset
+     (the Release's tag must match RELEASE_TAG in app.py):
+         gh release upload <tag> D:\Downloads\aod_theme_manager (1)\aod_theme_manager\them/*.aodbackup
+     (or drag-and-drop them on the Release's edit page on github.com)
+  2. Commit and push the generated themes_manifest.json to your repo.
+

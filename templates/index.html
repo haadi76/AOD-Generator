@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>AOD Theme Manager</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <h1>AOD Theme Manager</h1>
+      <p class="header-sub">Select 20 themes, generate a backup, restore it.</p>
+    </div>
+    <div class="header-right">
+      <button id="refreshBtn" class="icon-btn" title="Check GitHub for new themes" aria-label="Refresh themes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+          <path d="M21 4v5h-5"/>
+        </svg>
+      </button>
+      <button id="uploadBtn" class="icon-btn" title="Upload your own .aodbackup themes" aria-label="Upload themes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 16V4M12 4l-5 5M12 4l5 5"/>
+          <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+        </svg>
+      </button>
+      <a id="helpBtn" class="icon-btn" title="Help / documentation" aria-label="Help" href="" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M9.5 9.5a2.5 2.5 0 0 1 4.86.9c0 1.6-2.36 2.1-2.36 3.6"/>
+          <circle cx="12" cy="17" r="0.5" fill="currentColor"/>
+        </svg>
+      </a>
+      <div id="counter">0 / 20 selected</div>
+    </div>
+    <input type="file" id="uploadInput" accept=".aodbackup" multiple style="display:none">
+  </header>
+
+  <div id="updateBanner" class="update-banner" style="display:none">
+    <span id="updateBannerText"></span>
+    <button id="updateBannerDismiss" class="dismiss-btn" aria-label="Dismiss">&times;</button>
+  </div>
+
+  <div id="themesStatus" class="status-row"></div>
+  <div id="uploadStatus"></div>
+
+  <div id="grid"></div>
+
+  <footer>
+    <button id="generateBtn" disabled>Generate Backup</button>
+    <span id="status"></span>
+    <a id="downloadLink" style="display:none" href="/api/download">Download backup</a>
+  </footer>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,423 @@
+/* ---------------------------------------------------------------
+   AOD Theme Manager — visual language
+   Grounded in the subject: an Always-On Display is a dim OLED
+   screen with a single glowing readout. The UI borrows that —
+   near-black canvas, one phosphor-blue glow, a monospace readout
+   face for anything numeric/status-like, everything else quiet.
+   ----------------------------------------------------------------*/
+
+:root {
+  --bg: #08090b;
+  --surface: #131418;
+  --surface-raised: #1a1c21;
+  --border: #24262c;
+  --border-soft: #1c1e23;
+
+  --text: #ececef;
+  --text-dim: #90939c;
+  --text-faint: #55575e;
+
+  --accent: #8fe3ff;
+  --accent-strong: #c3f1ff;
+  --accent-wash: rgba(143, 227, 255, 0.10);
+  --accent-wash-strong: rgba(143, 227, 255, 0.20);
+
+  --warn: #ffb37a;
+  --warn-wash: rgba(255, 179, 122, 0.12);
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --radius-tile: 14px;
+  --radius-chip: 10px;
+  --radius-pill: 999px;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+  /* the one deliberate flourish: a faint screen glow + scanlines,
+     echoing the OLED panel this tool exists to theme */
+  background-image:
+    radial-gradient(ellipse 60% 40% at 50% 0%, var(--accent-wash), transparent 70%),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.012) 0px,
+      rgba(255, 255, 255, 0.012) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  background-attachment: fixed;
+}
+
+/* ---------- header ---------- */
+
+header {
+  padding: 16px 18px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px 12px;
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-soft);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+header h1 { white-space: nowrap; }
+
+header h1 {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--text);
+}
+
+.header-sub {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: inherit;
+  font-weight: normal;
+  border-radius: var(--radius-chip);
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+
+.icon-btn svg { width: 18px; height: 18px; }
+
+.icon-btn:hover { background: var(--surface); color: var(--text); }
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn:disabled { opacity: 0.5; cursor: default; }
+
+.icon-btn.spinning svg { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#counter {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
+}
+
+#counter.pulse {
+  color: var(--accent-strong);
+  border-color: var(--accent-wash-strong);
+  background: var(--accent-wash);
+}
+
+/* ---------- upload status ---------- */
+
+#uploadStatus {
+  padding: 10px 18px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  min-height: 14px;
+}
+
+#uploadStatus.error .upload-summary,
+#themesStatus.error { color: var(--warn); }
+
+#themesStatus.muted { color: var(--text-faint); }
+
+.status-row {
+  padding: 10px 18px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  min-height: 0;
+}
+.status-row:empty { padding: 0; }
+
+/* --- update banner --- */
+
+.update-banner {
+  margin: 10px 18px 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-chip);
+  background: var(--accent-wash);
+  border: 1px solid var(--accent-wash-strong);
+  color: var(--accent-strong);
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.dismiss-btn {
+  background: none;
+  border: none;
+  color: var(--accent-strong);
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+  width: auto;
+}
+
+/* --- remote (GitHub-hosted, not-yet-downloaded) theme cards --- */
+
+.cloud-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(8, 9, 11, 0.65);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-strong);
+}
+.cloud-badge svg { width: 12px; height: 12px; }
+
+.upload-summary { margin-bottom: 6px; }
+
+.upload-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.upload-row {
+  background: var(--surface);
+  border: 1px solid var(--warn-wash);
+  border-radius: var(--radius-chip);
+  padding: 8px 10px;
+}
+
+.upload-filename {
+  color: var(--text);
+  font-weight: 600;
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.upload-reason {
+  color: var(--warn);
+  font-family: var(--font-ui);
+  line-height: 1.4;
+}
+
+/* ---------- grid ---------- */
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 10px;
+  padding: 14px 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.theme-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-tile);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--surface);
+  user-select: none;
+  touch-action: manipulation;
+  transition: border-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+}
+
+.theme-card:hover { border-color: var(--border); }
+.theme-card:active { transform: scale(0.96); }
+
+.theme-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 6px 20px -4px var(--accent-wash-strong);
+}
+
+/* skeleton placeholder while themes/previews are loading */
+.theme-card.skeleton {
+  cursor: default;
+  pointer-events: none;
+}
+
+.theme-card.skeleton .preview-wrap {
+  background: linear-gradient(100deg, var(--surface) 30%, var(--surface-raised) 50%, var(--surface) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.theme-card.skeleton .label {
+  background: var(--surface-raised);
+  border-radius: 4px;
+  height: 10px;
+  margin: 6px 10px 8px;
+  color: transparent;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Crop container: shows only the center 70% of the preview image */
+.preview-wrap {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--surface-raised);
+  position: relative;
+}
+
+.preview-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scale(1.4286);   /* 1 / 0.7 -> reveals the center 70% */
+  transform-origin: center center;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0;
+}
+
+.preview-wrap img.loaded { opacity: 1; }
+
+.theme-card:active .preview-wrap img { transform: scale(1.37); }
+
+.theme-card .label {
+  font-size: 11.5px;
+  padding: 7px 8px;
+  text-align: center;
+  word-break: break-word;
+  color: var(--text-dim);
+  transition: color 0.18s ease;
+}
+
+.theme-card.selected .label { color: var(--text); }
+
+/* ---------- footer ---------- */
+
+footer {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  position: sticky;
+  bottom: 0;
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border-soft);
+}
+
+button {
+  padding: 11px 24px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: #06222b;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.12s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-strong);
+  box-shadow: 0 4px 18px -4px var(--accent-wash-strong);
+}
+
+button:active:not(:disabled) { transform: scale(0.97); }
+
+button:disabled {
+  background: var(--surface);
+  color: var(--text-faint);
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+
+#status {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: color 0.2s ease;
+}
+
+#downloadLink {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 4px;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease, opacity 0.25s ease;
+}
+
+#downloadLink:hover { border-color: var(--accent); }
+
+/* Phone-sized screens: bigger tap targets, tighter grid */
+@media (max-width: 480px) {
+  #grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; padding: 10px; }
+  header { padding: 14px 14px 12px; }
+  header h1 { font-size: 15.5px; white-space: normal; }
+  .header-sub { font-size: 11px; }
+  .header-left { flex-basis: 100%; }
+  .header-right { flex-basis: 100%; justify-content: space-between; margin-left: 0; }
+  footer { flex-direction: column; align-items: stretch; }
+  footer button { width: 100%; text-align: center; }
+  #downloadLink { text-align: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
