@@ -2,7 +2,7 @@ const MAX_SELECT = 20;
 const MAX_UPLOAD_FILES = 15;
 
 // TODO: put your real documentation URL here before publishing.
-const HELP_URL = "https://github.com/YOUR_USERNAME/YOUR_REPO#readme";
+const HELP_URL = "https://github.com/haadi76/HyperOS-custom-AOD-guide";
 
 let selected = [];   // ordered list of theme ids, order = slot order
                       // id = plain filename (local upload) or "remote:filename" (GitHub-hosted)
