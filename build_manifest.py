@@ -1,31 +1,12 @@
 """
-Run this locally, pointed at a folder containing your full library of real
-.aodbackup theme files, to (re)generate themes_manifest.json - the small
-file that tells the website what themes exist on GitHub, complete with
-preview images, without the website needing the actual (much larger)
-theme files until someone picks one.
+Generates themes_manifest.json either from a local folder OR directly
+from the 'themes' release tag on GitHub.
 
+Local Usage:
     python build_manifest.py /path/to/your/theme/library
 
-This script only READS local files and WRITES themes_manifest.json next to
-itself. It never touches GitHub - uploading is a separate manual step
-printed at the end.
-
-After running it:
-  1. Upload every .aodbackup file in that folder as a Release asset. The
-     Release's tag must match RELEASE_TAG in app.py. Easiest with the
-     GitHub CLI (https://cli.github.com):
-         gh release upload <tag> /path/to/your/theme/library/*.aodbackup
-     ...or drag-and-drop them onto the Release's "Assets" section on
-     github.com/<owner>/<repo>/releases.
-  2. Commit and push the generated themes_manifest.json to your repo, at
-     the branch/path app.py's MANIFEST_URL points at (repo root by
-     default). Existing users pick it up automatically next time they
-     open the app or hit "Refresh" - no re-download of the app itself.
-
-Re-run this any time you add, remove, or replace theme files in your
-library folder; it always regenerates the whole manifest from what's
-currently in that folder.
+GitHub Actions Usage (automatically downloads release assets):
+    python build_manifest.py --remote
 """
 import os
 import sys
@@ -33,12 +14,20 @@ import json
 import base64
 import zipfile
 import hashlib
+import tempfile
+import urllib.request
 from datetime import date, timezone, datetime
 
 PREVIEW_NAMES = ("preview_aod_0.png", "preview_aod_0.jpg", "preview_aod_0.jpeg")
 
+# Repository Configuration
+REPO_OWNER = "haadi76"
+REPO_NAME = "AOD-Generator"
+TARGET_RELEASE_TAG = "themes"
+
 
 def find_preview(zip_path):
+    """Extracts preview image from within the .aodbackup zip file."""
     with zipfile.ZipFile(zip_path, "r") as zf:
         names = zf.namelist()
         candidates = [n for n in names if n.lower().endswith(PREVIEW_NAMES)]
@@ -54,14 +43,84 @@ def find_preview(zip_path):
             return f.read(), mime
 
 
-def main():
-    if len(sys.argv) != 2:
-        print("Usage: python build_manifest.py /path/to/your/theme/library")
+def process_file_info(file_path):
+    """Calculates file size and SHA256 hash in 64KB chunks to handle 300MB+ files smoothly."""
+    size_bytes = os.path.getsize(file_path)
+    sha256_hash = hashlib.sha256()
+
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            sha256_hash.update(chunk)
+
+    return size_bytes, sha256_hash.hexdigest()
+
+
+def fetch_release_assets_to_dir(target_dir):
+    """Downloads all .aodbackup files from the 'themes' release tag into target_dir."""
+    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/tags/{TARGET_RELEASE_TAG}"
+    req = urllib.request.Request(
+        url, 
+        headers={"User-Agent": "AOD-Manifest-Builder"}
+    )
+    
+    token = os.getenv("GITHUB_TOKEN")
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
+
+    print(f"Fetching release metadata from {url}...")
+    try:
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+    except Exception as e:
+        print(f"Error accessing release tag '{TARGET_RELEASE_TAG}': {e}")
         sys.exit(1)
 
-    src_dir = sys.argv[1]
-    if not os.path.isdir(src_dir):
-        print(f"Not a folder: {src_dir}")
+    assets = data.get("assets", [])
+    downloaded_files = 0
+
+    for asset in assets:
+        fname = asset["name"]
+        if fname.lower().endswith(".aodbackup"):
+            download_url = asset["browser_download_url"]
+            dest_path = os.path.join(target_dir, fname)
+            print(f"  Downloading release asset: {fname} ({asset['size']:,} bytes)...")
+            
+            dl_req = urllib.request.Request(
+                download_url, 
+                headers={"User-Agent": "AOD-Manifest-Builder"}
+            )
+            if token:
+                dl_req.add_header("Authorization", f"Bearer {token}")
+
+            with urllib.request.urlopen(dl_req) as resp, open(dest_path, "wb") as out_file:
+                while True:
+                    chunk = resp.read(65536)
+                    if not chunk:
+                        break
+                    out_file.write(chunk)
+            
+            downloaded_files += 1
+
+    if downloaded_files == 0:
+        print(f"No .aodbackup assets found in release tag '{TARGET_RELEASE_TAG}'.")
+        sys.exit(1)
+
+
+def main():
+    if len(sys.argv) == 2 and sys.argv[1] == "--remote":
+        temp_dir = tempfile.mkdtemp()
+        print(f"Running in remote mode. Fetching assets from release tag '{TARGET_RELEASE_TAG}'...")
+        fetch_release_assets_to_dir(temp_dir)
+        src_dir = temp_dir
+    elif len(sys.argv) == 2:
+        src_dir = sys.argv[1]
+        if not os.path.isdir(src_dir):
+            print(f"Not a folder: {src_dir}")
+            sys.exit(1)
+    else:
+        print("Usage:")
+        print("  Local:  python build_manifest.py /path/to/theme/folder")
+        print("  Remote: python build_manifest.py --remote")
         sys.exit(1)
 
     files = sorted(f for f in os.listdir(src_dir) if f.lower().endswith(".aodbackup"))
@@ -88,18 +147,17 @@ def main():
             continue
 
         raw, mime = found
-        with open(path, "rb") as f:
-            file_bytes = f.read()
+        size_bytes, sha256_hex = process_file_info(path)
 
         themes.append({
             "filename": fname,
             "name": os.path.splitext(fname)[0],
             "preview": base64.b64encode(raw).decode("ascii"),
             "preview_mime": mime,
-            "size_bytes": len(file_bytes),
-            "sha256": hashlib.sha256(file_bytes).hexdigest(),
+            "size_bytes": size_bytes,
+            "sha256": sha256_hex,
         })
-        print(f"  added {fname}  ({len(file_bytes):,} bytes)")
+        print(f"  processed {fname}  ({size_bytes:,} bytes)")
 
     manifest = {
         "version": datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S"),
@@ -117,15 +175,6 @@ def main():
         print(f"\nSkipped {len(skipped)} file(s):")
         for fname, reason in skipped:
             print(f"  - {fname}: {reason}")
-
-    print(
-        "\nNext steps:\n"
-        f"  1. Upload every .aodbackup file in {src_dir} as a Release asset\n"
-        "     (the Release's tag must match RELEASE_TAG in app.py):\n"
-        f"         gh release upload <tag> {src_dir}/*.aodbackup\n"
-        "     (or drag-and-drop them on the Release's edit page on github.com)\n"
-        "  2. Commit and push the generated themes_manifest.json to your repo.\n"
-    )
 
 
 if __name__ == "__main__":
